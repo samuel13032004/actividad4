@@ -2,7 +2,12 @@ import pandas as pd
 import statsmodels.api as sm
 from factor_analyzer import FactorAnalyzer
 from sklearn.cluster import KMeans
+from sklearn import metrics
 import matplotlib.pyplot as plt
+from sklearn.decomposition import FactorAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
 
 # Especifica la ruta de tu archivo Excel
 archivo_excel = 'FMCC Actividad 4 nuevo.xlsx'
@@ -11,6 +16,12 @@ archivo_excel_analisis_cluster = 'FMCC Actividad 4 nuevo.xlsx'
 # Carga el archivo Excel en un DataFrame de pandas
 df = pd.read_excel(archivo_excel)
 df1 = pd.read_excel(archivo_excel_analisis_cluster)
+# Eliminar la columna 'Ciudad' en el mismo DataFrame
+df1.drop('Opinión Cualitativa', axis=1, inplace=True)
+
+# Mostrar el DataFrame después de eliminar la columna
+print("\nDataFrame después de eliminar la columna 'Ciudad' (inplace=True):")
+print(df1)
 
 
 # Accede a las columnas del DataFrame
@@ -51,7 +62,7 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-plt.show()
+#plt.show()
 
 
 plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
@@ -63,7 +74,7 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-plt.show()
+#plt.show()
 
 
 # Crear el diagrama de barras
@@ -76,7 +87,7 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-plt.show()
+#plt.show()
 
 # Crear el diagrama de barras
 plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
@@ -87,7 +98,7 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-plt.show()
+#plt.show()
 
 # Crear el diagrama de barras
 plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
@@ -98,7 +109,7 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-plt.show()
+#plt.show()
 
 # Crear el diagrama de barras
 plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
@@ -109,7 +120,48 @@ plt.xlabel('Categorías')
 plt.ylabel('Frecuencia')
 plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
 plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
+#plt.show()
+
+
+#REGRESOION MÚLTIPLE
+# Reemplazar el valor "-" por NaN en todo el DataFrame
+df.replace('-', pd.NA, inplace=True)
+
+# Convertir columnas a tipo numérico
+df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']] = df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']].apply(pd.to_numeric, errors='coerce')
+
+# Eliminar filas que contienen NaN en alguna de las columnas de interés
+df.dropna(subset=['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño'], inplace=True)
+
+# Dividir los datos en características (X) y variable objetivo (y)
+X = df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']]
+y = df['Calidad del sueño']
+
+# Dividir los datos en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Crear el modelo de regresión lineal
+modelo = LinearRegression()
+
+# Entrenar el modelo
+modelo.fit(X_train, y_train)
+
+# Realizar predicciones en el conjunto de prueba
+predicciones = modelo.predict(X_test)
+
+# Evaluar el rendimiento del modelo
+print('Error absoluto medio:', metrics.mean_absolute_error(y_test, predicciones))
+print('Error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones))
+print('Raíz del error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones, squared=False))
+
+# Visualizar las predicciones
+plt.scatter(y_test, predicciones)
+plt.xlabel('Calidad del sueño real')
+plt.ylabel('Calidad del sueño predicha')
 plt.show()
+
+
+#ANALISIS FACTORIAL
 
 
 
@@ -141,4 +193,4 @@ plt.scatter(centroides[:, 0], centroides[:, 1], marker='X', s=200, linewidths=3,
 plt.title('Análisis de Clusters')
 plt.xlabel('Total')
 plt.ylabel('Relación calidad-precio')
-plt.show()
+#plt.show()
