@@ -158,43 +158,55 @@ df1.drop('Opinión Cualitativa', axis=1, inplace=True)
 #
 ###############################################################################################
 # ANALISIS FACTORIAL
-# ANALISIS FACTORIAL
+# Crear una copia del DataFrame original
+# Función para cerrar todas las figuras al presionar 'esc'
+def on_key(event):
+    if event.key == 'escape':
+        plt.close('all')
+
 df_factorial = df.copy()
+
 # Seleccionar las columnas relevantes para el análisis factorial
 columnas_analisis = ['Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
 
-# Crear un DataFrame con las columnas seleccionadas
-df_factor = df_factorial[columnas_analisis].copy()  # Hacer una copia explícita
+# Crear un DataFrame con las columnas seleccionadas y hacer una copia explícita
+df_factor = df_factorial[['Relación calidad-precio'] + columnas_analisis].copy()
 
 # Reemplazar valores faltantes
 df_factor.replace('-', pd.NA, inplace=True)
 df_factor.dropna(inplace=True)
 
-# Realizar el análisis factorial
-analizador_factor = FactorAnalyzer(n_factors=1, rotation='varimax')
-analizador_factor.fit(df_factor)
+# Realizar el análisis factorial para cada par de "Relación calidad-precio" con otras variables
+for columna in columnas_analisis:
+    # Crear un DataFrame para el par actual
+    df_par = pd.DataFrame({
+        'Relación calidad-precio': df_factor['Relación calidad-precio'],
+        columna: df_factor[columna]
+    })
 
-# Obtener las cargas factoriales
-cargas_factoriales = analizador_factor.loadings_
+    # Realizar el análisis factorial
+    analizador_factor = FactorAnalyzer(n_factors=1, rotation='varimax')
+    analizador_factor.fit(df_par)
 
-# Imprimir las cargas factoriales
-print("Cargas Factoriales:")
-print(cargas_factoriales)
+    # Obtener las cargas factoriales
+    cargas_factoriales = analizador_factor.loadings_
 
-# Graficar las cargas factoriales
-def on_key(event):
-    if event.key == 'escape':
-        plt.close()
+    # Imprimir las cargas factoriales para el par actual
+    print(f"Cargas Factoriales para '{columna}':")
+    print(cargas_factoriales)
 
-plt.figure(figsize=(8, 6))
-plt.bar(range(len(columnas_analisis)), cargas_factoriales[0])
-plt.xticks(range(len(columnas_analisis)), columnas_analisis)
-plt.title('Cargas Factoriales')
-plt.gcf().canvas.mpl_connect('key_press_event', on_key)
+    # Graficar las cargas factoriales para el par actual
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.bar(range(2), cargas_factoriales[0])
+    ax.set_xticks(range(2))
+    ax.set_xticklabels(['Relación calidad-precio', columna])
+    ax.set_title(f'Cargas Factoriales para "{columna}"')
+
+    # Conectar la función de cierre con el evento 'esc'
+    fig.canvas.mpl_connect('key_press_event', on_key)
+
+# Mostrar todas las figuras
 plt.show()
-
-
-
 
 #################################################################################################
 # #ANALISIS CLUSTER
