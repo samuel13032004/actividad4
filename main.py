@@ -1,9 +1,11 @@
 import pandas as pd
 import statsmodels.api as sm
-from factor_analyzer import FactorAnalyzer
+from factor_analyzer import FactorAnalyzer #analisis factorial
 from sklearn.cluster import KMeans
 from sklearn import metrics
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt #graficos
+from matplotlib.widgets import Button  # Importa la clase Button desde el módulo widgets
+
 from sklearn.decomposition import FactorAnalysis
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -16,181 +18,206 @@ archivo_excel_analisis_cluster = 'FMCC Actividad 4 nuevo.xlsx'
 # Carga el archivo Excel en un DataFrame de pandas
 df = pd.read_excel(archivo_excel)
 df1 = pd.read_excel(archivo_excel_analisis_cluster)
+
+df1.replace('-', pd.NA, inplace=True)# para reemplazar guiones por NAs
+df1.dropna(inplace=True)# para eliminar filas con NA
+
 # Eliminar la columna 'Ciudad' en el mismo DataFrame
 df1.drop('Opinión Cualitativa', axis=1, inplace=True)
 
-# Mostrar el DataFrame después de eliminar la columna
-print("\nDataFrame después de eliminar la columna 'Ciudad' (inplace=True):")
-print(df1)
+# # Mostrar el DataFrame después de eliminar la columna
+# print("\nDataFrame después de eliminar la columna 'Opinión Cualitativa':")
+# print(df1)
+#
+# # Accede a las columnas del DataFrame
+# columnas = df1.columns
+#
+# # Imprime las columnas
+# print("Columnas en el archivo Excel:")
+# for columna in columnas:
+#     print(columna)
+# print("\n")
 
+##################################################################################################
+# # ANALISIS DE FRECUENCIA
+# df_frecuencia = df1
+# total = df_frecuencia['Total'].value_counts()
+# relacion_calidad_precio = df_frecuencia['Relación calidad-precio'].value_counts()
+# ubicacion = df_frecuencia['Ubicación'].value_counts()
+# servicio = df_frecuencia['Servicio'].value_counts()
+# habitaciones = df_frecuencia['Habitaciones'].value_counts()
+# limpieza = df_frecuencia['Limpieza'].value_counts()
+# calidad_sueño = df_frecuencia['Calidad del sueño'].value_counts()
+# # Imprime las frecuencias
+# print("Análisis de Frecuencias:")
+# print(total)
+# print(relacion_calidad_precio)
+# print(ubicacion)
+# print(servicio)
+# print(habitaciones)
+# print(limpieza)
+# print(calidad_sueño)
+# print("\n")
+#
+# # Lista de columnas sobre las que deseas hacer gráficos
+# columnas_interes = ['Total', 'Relación calidad-precio', 'Ubicación', 'Servicio', 'Limpieza', 'Calidad del sueño']
+#
+# # Colores diferentes para cada gráfico
+# colores = ['grey', 'green', 'yellow', 'blue', 'brown', 'pink']
+#
+# # Crear un diccionario para almacenar las figuras
+# figuras = {}
+#
+#
+# # Función para mostrar el gráfico y conectar al evento de teclado
+# def mostrar_grafico(columna, color):
+#     figuras[columna] = plt.figure(figsize=(10, 6))
+#     df_frecuencia[columna].value_counts().plot(kind='bar', color=color)
+#     plt.title(f'Diagrama de Barras de la Columna "{columna}"')
+#     plt.xlabel('Categorías')
+#     plt.ylabel('Frecuencia')
+#     plt.xticks(rotation=45, ha='right')
+#     plt.grid(axis='y', linestyle='--', alpha=0.7)
+#     plt.gcf().canvas.mpl_connect('key_press_event', on_key)
+#
+#
+# # Función para cerrar todas las figuras al presionar la tecla 'Esc'
+# def on_key(event):
+#     if event.key == 'escape':
+#         for _, figura in figuras.items():
+#             plt.close(figura)
+#
+#
+# # Iterar sobre las columnas e invocar la función para mostrar el gráfico con colores diferentes
+# for columna, color in zip(columnas_interes, colores):
+#     mostrar_grafico(columna, color)
+#
+# # Mostrar todas las figuras
+# plt.show()
 
-# Accede a las columnas del DataFrame
-columnas = df.columns
+##############################################################################################################
+#
+#
+# # REGRESION MÚLTIPLE
+# # Reemplazar el valor "-" por NaN
+# df.replace('-', pd.NA, inplace=True)
+#
+# # Convertir columnas a tipo numérico
+# df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']] = (
+#     df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']]
+#     .apply(pd.to_numeric, errors='coerce'))
+#
+# # Eliminar filas que contienen NaN en alguna de las columnas de interés
+# df.dropna(subset=['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño'],
+#           inplace=True)
+#
+# # Dividir los datos en características (X) y variable objetivo (y)
+# X = df[['Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']]
+# y = df['Relación calidad-precio']
+#
+# #comprobar que las variables son numericas
+# #print(df.dtypes)
+# #print(df.isnull().sum())
+#
+# # Dividir los datos en conjuntos de entrenamiento y prueba
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+#
+# ## Para un analisis mas estadistico
+# # Agrega una columna de intercepto a X (La constante beta_0)
+# X = sm.add_constant(X)
+#
+# # Crea el modelo de regresión lineal con statsmodels
+# modelo_stats = sm.OLS(y, X).fit()
+#
+# # Imprime un resumen del modelo
+# print(modelo_stats.summary())
+#
+# # Realizar predicciones en el conjunto de prueba
+# predicciones_stats = modelo_stats.predict(sm.add_constant(X_test))
+#
+# # Evaluar el rendimiento del modelo
+# print("\nSe procede a evaluar el rendimiento del modelo a partir de predicciones")
+# print('Error absoluto medio:', metrics.mean_absolute_error(y_test, predicciones_stats))
+# print('Error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones_stats))
+# print('Raíz del error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones_stats, squared=False))
+#
+# # Función para cerrar la ventana de visualización al presionar la tecla 'Escape'
+# def on_key(event):
+#     if event.key == 'escape':
+#         plt.close()
+#
+# # Conectar la función al evento de teclado
+# fig, ax = plt.subplots()
+# fig.canvas.mpl_connect('key_press_event', on_key)
+#
+# # Visualizar las predicciones
+# ax.scatter(y_test, predicciones_stats)
+# ax.set_xlabel('Relación calidad-precio real')
+# ax.set_ylabel('Relación calidad-precio predicha')
+# plt.show()
+#
+###############################################################################################
+# ANALISIS FACTORIAL
+# ANALISIS FACTORIAL
+df_factorial = df.copy()
+# Seleccionar las columnas relevantes para el análisis factorial
+columnas_analisis = ['Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
 
-# Imprime las columnas
-print("Columnas en el archivo Excel:")
-for columna in columnas:
-    print(columna)
+# Crear un DataFrame con las columnas seleccionadas
+df_factor = df_factorial[columnas_analisis].copy()  # Hacer una copia explícita
 
+# Reemplazar valores faltantes
+df_factor.replace('-', pd.NA, inplace=True)
+df_factor.dropna(inplace=True)
 
+# Realizar el análisis factorial
+analizador_factor = FactorAnalyzer(n_factors=1, rotation='varimax')
+analizador_factor.fit(df_factor)
 
+# Obtener las cargas factoriales
+cargas_factoriales = analizador_factor.loadings_
 
-#ANALISIS DE FRECUENCIA
-total = df['Total'].value_counts()
-relacion_calidad_precio = df['Relación calidad-precio'].value_counts()
-ubicacion = df['Ubicación'].value_counts()
-servicio = df['Servicio'].value_counts()
-habitaciones = df['Habitaciones'].value_counts()
-limpieza = df['Limpieza'].value_counts()
-calidad_sueño = df['Calidad del sueño'].value_counts()
-# Imprime las frecuencias
-print("Análisis de Frecuencias:")
-print(total)
-print(relacion_calidad_precio)
-print(ubicacion)
-print(servicio)
-print(habitaciones)
-print(limpieza)
-print(calidad_sueño)
+# Imprimir las cargas factoriales
+print("Cargas Factoriales:")
+print(cargas_factoriales)
 
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='grey')
-
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Total"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='green')
-
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Relación calidad-precio"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-
-# Crear el diagrama de barras
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='yellow')
-
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Ubicación"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-# Crear el diagrama de barras
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='blue')
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Servicio"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-# Crear el diagrama de barras
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='brown')
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Limpieza"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-# Crear el diagrama de barras
-plt.figure(figsize=(10, 6))  # Ajusta el tamaño del gráfico según tus preferencias
-servicio.plot(kind='bar', color='pink')
-# Personaliza el gráfico
-plt.title('Diagrama de Barras de la Columna "Calidad del sueño"')
-plt.xlabel('Categorías')
-plt.ylabel('Frecuencia')
-plt.xticks(rotation=45, ha='right')  # Ajusta la rotación de las etiquetas en el eje x si es necesario
-plt.grid(axis='y', linestyle='--', alpha=0.7)  # Añade una cuadrícula horizontal
-#plt.show()
-
-
-#REGRESOION MÚLTIPLE
-# Reemplazar el valor "-" por NaN en todo el DataFrame
-df.replace('-', pd.NA, inplace=True)
-
-# Convertir columnas a tipo numérico
-df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']] = df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']].apply(pd.to_numeric, errors='coerce')
-
-# Eliminar filas que contienen NaN en alguna de las columnas de interés
-df.dropna(subset=['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño'], inplace=True)
-
-# Dividir los datos en características (X) y variable objetivo (y)
-X = df[['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza']]
-y = df['Calidad del sueño']
-
-# Dividir los datos en conjuntos de entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-# Crear el modelo de regresión lineal
-modelo = LinearRegression()
-
-# Entrenar el modelo
-modelo.fit(X_train, y_train)
-
-# Realizar predicciones en el conjunto de prueba
-predicciones = modelo.predict(X_test)
-
-# Evaluar el rendimiento del modelo
-print('Error absoluto medio:', metrics.mean_absolute_error(y_test, predicciones))
-print('Error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones))
-print('Raíz del error cuadrático medio:', metrics.mean_squared_error(y_test, predicciones, squared=False))
-
-# Visualizar las predicciones
-plt.scatter(y_test, predicciones)
-plt.xlabel('Calidad del sueño real')
-plt.ylabel('Calidad del sueño predicha')
+# Graficar las cargas factoriales
+plt.figure(figsize=(8, 6))
+plt.bar(range(len(columnas_analisis)), cargas_factoriales[0])
+plt.xticks(range(len(columnas_analisis)), columnas_analisis)
+plt.title('Cargas Factoriales')
 plt.show()
 
 
-#ANALISIS FACTORIAL
 
 
-
-
-
-#ANALISIS CLUSTER
-# Elimina las filas que contienen el valor no válido
-df1 = df1[df1['Total'] != '-']
-df1 = df1[df1['Relación calidad-precio'] != '-']
-X = df1[['Total', 'Relación calidad-precio']]
-
-
-# Ajusta el modelo de K-Means con, por ejemplo, 3 clusters
-modelo_kmeans = KMeans(n_clusters=3,  n_init=10)
-modelo_kmeans.fit(X)
-
-
-# Ahora puedes acceder y utilizar el modelo_kmeans
-etiquetas_clusters = modelo_kmeans.labels_
-centroides = modelo_kmeans.cluster_centers_
-
-
-# Realiza acciones adicionales con el modelo si es necesario
-
-
-# Visualiza los clusters
-plt.scatter(X['Total'], X['Relación calidad-precio'], c=etiquetas_clusters, cmap='viridis')
-plt.scatter(centroides[:, 0], centroides[:, 1], marker='X', s=200, linewidths=3, color='r')
-plt.title('Análisis de Clusters')
-plt.xlabel('Total')
-plt.ylabel('Relación calidad-precio')
-#plt.show()
+#################################################################################################
+# #ANALISIS CLUSTER
+# # Elimina las filas que contienen el valor no válido
+# df1 = df1[df1['Total'] != '-']
+# df1 = df1[df1['Relación calidad-precio'] != '-']
+# X = df1[['Total', 'Relación calidad-precio']]
+#
+#
+# # Ajusta el modelo de K-Means con, por ejemplo, 3 clusters
+# modelo_kmeans = KMeans(n_clusters=3,  n_init=10)
+# modelo_kmeans.fit(X)
+#
+#
+# # Ahora puedes acceder y utilizar el modelo_kmeans
+# etiquetas_clusters = modelo_kmeans.labels_
+# centroides = modelo_kmeans.cluster_centers_
+#
+#
+# # Realiza acciones adicionales con el modelo si es necesario
+#
+#
+# # Visualiza los clusters
+# plt.scatter(X['Total'], X['Relación calidad-precio'], c=etiquetas_clusters, cmap='viridis')
+# plt.scatter(centroides[:, 0], centroides[:, 1], marker='X', s=200, linewidths=3, color='r')
+# plt.title('Análisis de Clusters')
+# plt.xlabel('Total')
+# plt.ylabel('Relación calidad-precio')
+# #plt.show()
+#
+#
