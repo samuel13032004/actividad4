@@ -182,10 +182,15 @@ print("Cargas Factoriales:")
 print(cargas_factoriales)
 
 # Graficar las cargas factoriales
+def on_key(event):
+    if event.key == 'escape':
+        plt.close()
+
 plt.figure(figsize=(8, 6))
 plt.bar(range(len(columnas_analisis)), cargas_factoriales[0])
 plt.xticks(range(len(columnas_analisis)), columnas_analisis)
 plt.title('Cargas Factoriales')
+plt.gcf().canvas.mpl_connect('key_press_event', on_key)
 plt.show()
 
 
