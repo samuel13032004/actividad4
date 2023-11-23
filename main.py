@@ -3,6 +3,9 @@ import statsmodels.api as sm
 from factor_analyzer import FactorAnalyzer #analisis factorial
 from sklearn.cluster import KMeans
 from sklearn import metrics
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import numpy as np
 import matplotlib.pyplot as plt #graficos
 from matplotlib.widgets import Button  # Importa la clase Button desde el módulo widgets
 
@@ -158,83 +161,127 @@ df1.drop('Opinión Cualitativa', axis=1, inplace=True)
 #
 ###############################################################################################
 # ANALISIS FACTORIAL
-# Crear una copia del DataFrame original
-# Función para cerrar todas las figuras al presionar 'esc'
-def on_key(event):
-    if event.key == 'escape':
-        plt.close('all')
-
-df_factorial = df.copy()
-
-# Seleccionar las columnas relevantes para el análisis factorial
-columnas_analisis = ['Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
-
-# Crear un DataFrame con las columnas seleccionadas y hacer una copia explícita
-df_factor = df_factorial[['Relación calidad-precio'] + columnas_analisis].copy()
-
-# Reemplazar valores faltantes
-df_factor.replace('-', pd.NA, inplace=True)
-df_factor.dropna(inplace=True)
-
-# Realizar el análisis factorial para cada par de "Relación calidad-precio" con otras variables
-for columna in columnas_analisis:
-    # Crear un DataFrame para el par actual
-    df_par = pd.DataFrame({
-        'Relación calidad-precio': df_factor['Relación calidad-precio'],
-        columna: df_factor[columna]
-    })
-
-    # Realizar el análisis factorial
-    analizador_factor = FactorAnalyzer(n_factors=1, rotation='varimax')
-    analizador_factor.fit(df_par)
-
-    # Obtener las cargas factoriales
-    cargas_factoriales = analizador_factor.loadings_
-
-    # Imprimir las cargas factoriales para el par actual
-    print(f"Cargas Factoriales para '{columna}':")
-    print(cargas_factoriales)
-
-    # Graficar las cargas factoriales para el par actual
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.bar(range(2), cargas_factoriales[0])
-    ax.set_xticks(range(2))
-    ax.set_xticklabels(['Relación calidad-precio', columna])
-    ax.set_title(f'Cargas Factoriales para "{columna}"')
-
-    # Conectar la función de cierre con el evento 'esc'
-    fig.canvas.mpl_connect('key_press_event', on_key)
-
-# Mostrar todas las figuras
-plt.show()
-
+#
+# # Función para cerrar todas las figuras al presionar 'esc'
+# def on_key(event):
+#     if event.key == 'escape':
+#         plt.close('all')
+#
+# df_factorial = df.copy()
+#
+# # Seleccionar las columnas relevantes para el análisis factorial
+# columnas_analisis = ['Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
+#
+# # Crear un DataFrame con las columnas seleccionadas y hacer una copia explícita
+# df_factor = df_factorial[['Relación calidad-precio'] + columnas_analisis].copy()
+#
+# # Reemplazar valores faltantes
+# df_factor.replace('-', pd.NA, inplace=True)
+# df_factor.dropna(inplace=True)
+#
+# # Realizar el análisis factorial para cada par de "Relación calidad-precio" con otras variables
+# for columna in columnas_analisis:
+#     # Crear un DataFrame para el par actual
+#     df_par = pd.DataFrame({
+#         'Relación calidad-precio': df_factor['Relación calidad-precio'],
+#         columna: df_factor[columna]
+#     })
+#
+#     # Realizar el análisis factorial
+#     analizador_factor = FactorAnalyzer(n_factors=1, rotation='varimax')
+#     analizador_factor.fit(df_par)
+#
+#     # Obtener las cargas factoriales
+#     cargas_factoriales = analizador_factor.loadings_
+#
+#     # Imprimir las cargas factoriales para el par actual
+#     print(f"Cargas Factoriales para '{columna}':")
+#     print(cargas_factoriales)
+#
+#     # Graficar las cargas factoriales para el par actual
+#     fig, ax = plt.subplots(figsize=(8, 6))
+#     ax.bar(range(2), cargas_factoriales[0])
+#     ax.set_xticks(range(2))
+#     ax.set_xticklabels(['Relación calidad-precio', columna])
+#     ax.set_title(f'Cargas Factoriales para "{columna}"')
+#
+#     # Conectar la función de cierre con el evento 'esc'
+#     fig.canvas.mpl_connect('key_press_event', on_key)
+#
+# # Mostrar todas las figuras
+# plt.show()
+# 
 #################################################################################################
-# #ANALISIS CLUSTER
-# # Elimina las filas que contienen el valor no válido
-# df1 = df1[df1['Total'] != '-']
-# df1 = df1[df1['Relación calidad-precio'] != '-']
-# X = df1[['Total', 'Relación calidad-precio']]
+#ANALISIS CLUSTER
+df_cluster = df.copy()
+
+# Reemplazar el valor "-" por NaN
+df_cluster.replace('-', pd.NA, inplace=True)
+
+# Convertir columnas a tipo numérico
+columnas_numericas = ['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
+df_cluster[columnas_numericas] = df_cluster[columnas_numericas].apply(pd.to_numeric, errors='coerce')
+
+# Eliminar filas que contienen NaN en alguna de las columnas de interés
+df_cluster.dropna(subset=columnas_numericas, inplace=True)
+
+print(df_cluster)
+df_cluster_variables = df_cluster.drop(df_cluster.columns[0], axis=1)
+
+#normalizar
+df_cluster_norm = (df_cluster_variables-df_cluster_variables.min())/(df_cluster_variables.max()-df_cluster_variables.min())
+print(df_cluster_variables.describe())
+print(df_cluster_norm.describe())
+
+####Calcular el numero de clusters
+# # Selecciona el rango de número de clusters que deseas probar
+# k_range = range(1, 11)
 #
+# # Inicializa una lista para almacenar los valores de inercia (dentro del grupo)
+# inertia = []
 #
-# # Ajusta el modelo de K-Means con, por ejemplo, 3 clusters
-# modelo_kmeans = KMeans(n_clusters=3,  n_init=10)
-# modelo_kmeans.fit(X)
+# # Calcula la inercia para diferentes valores de k
+# for k in k_range:
+#     modelo_kmeans = KMeans(n_clusters=k, n_init=10, random_state=42)
+#     modelo_kmeans.fit(df_cluster_norm)
+#     inertia.append(modelo_kmeans.inertia_)
 #
-#
-# # Ahora puedes acceder y utilizar el modelo_kmeans
-# etiquetas_clusters = modelo_kmeans.labels_
-# centroides = modelo_kmeans.cluster_centers_
-#
-#
-# # Realiza acciones adicionales con el modelo si es necesario
-#
-#
-# # Visualiza los clusters
-# plt.scatter(X['Total'], X['Relación calidad-precio'], c=etiquetas_clusters, cmap='viridis')
-# plt.scatter(centroides[:, 0], centroides[:, 1], marker='X', s=200, linewidths=3, color='r')
-# plt.title('Análisis de Clusters')
-# plt.xlabel('Total')
-# plt.ylabel('Relación calidad-precio')
-# #plt.show()
-#
-#
+# # Visualiza el gráfico del codo
+# plt.figure(figsize=(8, 6))
+# plt.plot(k_range, inertia, marker='o')
+# plt.title('Método del Codo para Determinar la Cantidad Óptima de Clusters')
+# plt.xlabel('Número de Clusters (k)')
+# plt.ylabel('Inercia')
+# plt.show()
+
+## Tras ejecutar el código anterior, podemos definir n_clusters = 3
+clustering = KMeans(n_clusters = 3, max_iter = 300) #Crea el modelo
+clustering.fit(df_cluster_norm) #Aplica el modelo a la base d edatos
+
+df_cluster['KMeans_Clusters'] = clustering.labels_ #Los resultados del clustering se guardan en labels_ dentro del modelo
+print(df_cluster.head())
+
+#analisis de componentes principales
+pca = PCA(n_components = 2)
+pca_opiniones = pca.fit_transform(df_cluster_norm)
+pca_opiniones_df = pd.DataFrame(data = pca_opiniones, columns = ['Componente_1', 'Componente_2'])
+pca_nombres_opiniones = pd.concat([pca_opiniones_df, df_cluster[['KMeans_Clusters']]], axis=1)
+
+print(pca_nombres_opiniones)
+
+
+fig = plt.figure(figsize=(6, 6))
+
+ax = fig.add_subplot(1, 1, 1)
+ax.set_xlabel('Componente_1', fontsize=15)
+ax.set_ylabel('Componente_2', fontsize=15)
+ax.set_title('Componentes Principales', fontsize=20)
+
+# Manejar valores no finitos en 'KMeans_Clusters'
+pca_nombres_opiniones['KMeans_Clusters'] = pca_nombres_opiniones['KMeans_Clusters'].fillna(-1)
+
+# Asegúrate de que los valores en KMeans_Clusters sean enteros
+color_theme = np.array(["blue", "green", "orange"])
+ax.scatter(x=pca_nombres_opiniones.Componente_1, y=pca_nombres_opiniones.Componente_2,
+           c=color_theme[pca_nombres_opiniones['KMeans_Clusters'].astype(int)], s=50)
+plt.show()
