@@ -212,76 +212,81 @@ df1.drop('Opinión Cualitativa', axis=1, inplace=True)
 # plt.show()
 # 
 #################################################################################################
-#ANALISIS CLUSTER
-df_cluster = df.copy()
-
-# Reemplazar el valor "-" por NaN
-df_cluster.replace('-', pd.NA, inplace=True)
-
-# Convertir columnas a tipo numérico
-columnas_numericas = ['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
-df_cluster[columnas_numericas] = df_cluster[columnas_numericas].apply(pd.to_numeric, errors='coerce')
-
-# Eliminar filas que contienen NaN en alguna de las columnas de interés
-df_cluster.dropna(subset=columnas_numericas, inplace=True)
-
-print(df_cluster)
-df_cluster_variables = df_cluster.drop(df_cluster.columns[0], axis=1)
-
-#normalizar
-df_cluster_norm = (df_cluster_variables-df_cluster_variables.min())/(df_cluster_variables.max()-df_cluster_variables.min())
-print(df_cluster_variables.describe())
-print(df_cluster_norm.describe())
-
-####Calcular el numero de clusters
-# # Selecciona el rango de número de clusters que deseas probar
-# k_range = range(1, 11)
+# #ANALISIS CLUSTER
+# df_cluster = df.copy()
 #
-# # Inicializa una lista para almacenar los valores de inercia (dentro del grupo)
-# inertia = []
+# # Reemplazar el valor "-" por NaN
+# df_cluster.replace('-', pd.NA, inplace=True)
 #
-# # Calcula la inercia para diferentes valores de k
-# for k in k_range:
-#     modelo_kmeans = KMeans(n_clusters=k, n_init=10, random_state=42)
-#     modelo_kmeans.fit(df_cluster_norm)
-#     inertia.append(modelo_kmeans.inertia_)
+# # Convertir columnas a tipo numérico
+# columnas_numericas = ['Relación calidad-precio', 'Ubicación', 'Servicio', 'Habitaciones', 'Limpieza', 'Calidad del sueño']
+# df_cluster[columnas_numericas] = df_cluster[columnas_numericas].apply(pd.to_numeric, errors='coerce')
 #
-# # Visualiza el gráfico del codo
-# plt.figure(figsize=(8, 6))
-# plt.plot(k_range, inertia, marker='o')
-# plt.title('Método del Codo para Determinar la Cantidad Óptima de Clusters')
-# plt.xlabel('Número de Clusters (k)')
-# plt.ylabel('Inercia')
+# # Eliminar filas que contienen NaN en alguna de las columnas de interés
+# df_cluster.dropna(subset=columnas_numericas, inplace=True)
+#
+# print(df_cluster)
+# df_cluster_variables = df_cluster.drop(df_cluster.columns[0], axis=1)
+#
+# #normalizar
+# df_cluster_norm = (df_cluster_variables-df_cluster_variables.min())/(df_cluster_variables.max()-df_cluster_variables.min())
+# print(df_cluster_variables.describe())
+# print(df_cluster_norm.describe())
+#
+# ####Calcular el numero de clusters
+# # # Selecciona el rango de número de clusters que deseas probar
+# # k_range = range(1, 11)
+# #
+# # # Inicializa una lista para almacenar los valores de inercia (dentro del grupo)
+# # inertia = []
+# #
+# # # Calcula la inercia para diferentes valores de k
+# # for k in k_range:
+# #     modelo_kmeans = KMeans(n_clusters=k, n_init=10, random_state=42)
+# #     modelo_kmeans.fit(df_cluster_norm)
+# #     inertia.append(modelo_kmeans.inertia_)
+# #
+# # # Visualiza el gráfico del codo
+# # plt.figure(figsize=(8, 6))
+# # plt.plot(k_range, inertia, marker='o')
+# # plt.title('Método del Codo para Determinar la Cantidad Óptima de Clusters')
+# # plt.xlabel('Número de Clusters (k)')
+# # plt.ylabel('Inercia')
+# # plt.show()
+#
+# ## Tras ejecutar el código anterior, podemos definir n_clusters = 3
+#
+# clustering = KMeans(n_clusters = 3, max_iter = 300) #Crea el modelo
+# clustering.fit(df_cluster_norm) #Aplica el modelo a la base d edatos
+#
+# df_cluster['KMeans_Clusters'] = clustering.labels_ #Los resultados del clustering se guardan en labels_ dentro del modelo
+# print(df_cluster.head())
+#
+# #analisis de componentes principales
+# pca = PCA(n_components = 2)
+# pca_opiniones = pca.fit_transform(df_cluster_norm)
+# pca_opiniones_df = pd.DataFrame(data = pca_opiniones, columns = ['Componente_1', 'Componente_2'])
+# pca_nombres_opiniones = pd.concat([pca_opiniones_df, df_cluster[['KMeans_Clusters']]], axis=1)
+#
+# print(pca_nombres_opiniones)
+#
+#
+# fig = plt.figure(figsize=(6, 6))
+#
+# ax = fig.add_subplot(1, 1, 1)
+# ax.set_xlabel('Componente_1', fontsize=15)
+# ax.set_ylabel('Componente_2', fontsize=15)
+# ax.set_title('Componentes Principales', fontsize=20)
+#
+# # Manejar valores no finitos en 'KMeans_Clusters'
+# pca_nombres_opiniones['KMeans_Clusters'] = pca_nombres_opiniones['KMeans_Clusters'].fillna(-1)
+#
+# # Asegúrate de que los valores en KMeans_Clusters sean enteros
+# color_theme = np.array(["blue", "green", "orange"])
+# ax.scatter(x=pca_nombres_opiniones.Componente_1, y=pca_nombres_opiniones.Componente_2,
+#            c=color_theme[pca_nombres_opiniones['KMeans_Clusters'].astype(int)], s=50)
 # plt.show()
-
-## Tras ejecutar el código anterior, podemos definir n_clusters = 3
-clustering = KMeans(n_clusters = 3, max_iter = 300) #Crea el modelo
-clustering.fit(df_cluster_norm) #Aplica el modelo a la base d edatos
-
-df_cluster['KMeans_Clusters'] = clustering.labels_ #Los resultados del clustering se guardan en labels_ dentro del modelo
-print(df_cluster.head())
-
-#analisis de componentes principales
-pca = PCA(n_components = 2)
-pca_opiniones = pca.fit_transform(df_cluster_norm)
-pca_opiniones_df = pd.DataFrame(data = pca_opiniones, columns = ['Componente_1', 'Componente_2'])
-pca_nombres_opiniones = pd.concat([pca_opiniones_df, df_cluster[['KMeans_Clusters']]], axis=1)
-
-print(pca_nombres_opiniones)
-
-
-fig = plt.figure(figsize=(6, 6))
-
-ax = fig.add_subplot(1, 1, 1)
-ax.set_xlabel('Componente_1', fontsize=15)
-ax.set_ylabel('Componente_2', fontsize=15)
-ax.set_title('Componentes Principales', fontsize=20)
-
-# Manejar valores no finitos en 'KMeans_Clusters'
-pca_nombres_opiniones['KMeans_Clusters'] = pca_nombres_opiniones['KMeans_Clusters'].fillna(-1)
-
-# Asegúrate de que los valores en KMeans_Clusters sean enteros
-color_theme = np.array(["blue", "green", "orange"])
-ax.scatter(x=pca_nombres_opiniones.Componente_1, y=pca_nombres_opiniones.Componente_2,
-           c=color_theme[pca_nombres_opiniones['KMeans_Clusters'].astype(int)], s=50)
-plt.show()
+#
+################
+#OPINION CUALITATIVA
+df_op_cualitativa = df.copy()
